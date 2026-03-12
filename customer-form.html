@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🐾 입장 등록 | 애견카페</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Nunito:wght@400;600;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #FFF8F0;
+    --warm: #FFE8CC;
+    --brown: #8B5E3C;
+    --dark-brown: #4A2F1A;
+    --accent: #FF8C42;
+    --accent-soft: #FFB380;
+    --green: #4CAF50;
+    --green-soft: #E8F5E9;
+    --text: #2D1B0E;
+    --border: #E8D5C0;
+    --shadow: rgba(139,94,60,0.15);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--cream);
+    min-height: 100vh;
+    color: var(--text);
+    overflow-x: hidden;
+  }
+
+  /* Decorative paw prints background */
+  body::before {
+    content: '🐾';
+    position: fixed;
+    top: -20px; right: -20px;
+    font-size: 180px;
+    opacity: 0.04;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .header {
+    background: linear-gradient(135deg, var(--dark-brown) 0%, var(--brown) 100%);
+    padding: 28px 24px 24px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    bottom: -30px; left: 50%;
+    transform: translateX(-50%);
+    width: 80px; height: 80px;
+    background: var(--cream);
+    border-radius: 50%;
+  }
+  .header-emoji { font-size: 36px; display: block; margin-bottom: 8px; }
+  .header h1 {
+    font-family: 'Nunito', 'Noto Sans KR', sans-serif;
+    color: #fff;
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: -0.3px;
+  }
+  .header p {
+    color: var(--accent-soft);
+    font-size: 13px;
+    margin-top: 4px;
+  }
+
+  .container {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 0 16px 40px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .notice-card {
+    background: linear-gradient(135deg, #FFF3E0, #FFE0B2);
+    border: 1.5px solid var(--accent-soft);
+    border-radius: 16px;
+    padding: 16px 18px;
+    margin: 24px 0 20px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .notice-card .icon { font-size: 22px; flex-shrink: 0; margin-top: 1px; }
+  .notice-card p { font-size: 13px; line-height: 1.6; color: var(--dark-brown); }
+  .notice-card strong { color: var(--accent); }
+
+  .form-card {
+    background: #fff;
+    border-radius: 20px;
+    padding: 24px 20px;
+    box-shadow: 0 4px 24px var(--shadow);
+    margin-bottom: 16px;
+  }
+
+  .section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--brown);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .field {
+    margin-bottom: 18px;
+  }
+  .field:last-child { margin-bottom: 0; }
+
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--dark-brown);
+    margin-bottom: 7px;
+  }
+  .required { color: var(--accent); margin-left: 2px; }
+
+  input[type="text"],
+  input[type="tel"],
+  input[type="date"],
+  select {
+    width: 100%;
+    padding: 13px 16px;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    font-size: 15px;
+    font-family: 'Noto Sans KR', sans-serif;
+    color: var(--text);
+    background: var(--cream);
+    transition: all 0.2s;
+    -webkit-appearance: none;
+  }
+  input:focus, select:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(255,140,66,0.12);
+  }
+  input::placeholder { color: #BBA99A; }
+
+  .radio-group {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .radio-option {
+    flex: 1;
+    min-width: 80px;
+  }
+  .radio-option input[type="radio"] { display: none; }
+  .radio-option label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 11px 8px;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: #999;
+    background: var(--cream);
+    transition: all 0.2s;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .radio-option input:checked + label {
+    border-color: var(--accent);
+    background: #FFF3E0;
+    color: var(--dark-brown);
+    box-shadow: 0 2px 8px rgba(255,140,66,0.2);
+  }
+
+  .signature-area {
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    background: #fff;
+    position: relative;
+  }
+  #signatureCanvas {
+    display: block;
+    width: 100%;
+    touch-action: none;
+    cursor: crosshair;
+  }
+  .sig-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: var(--warm);
+    border-top: 1px solid var(--border);
+  }
+  .sig-hint { font-size: 11px; color: var(--brown); }
+  .clear-btn {
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 700;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 10px;
+    border-radius: 8px;
+    transition: background 0.2s;
+  }
+  .clear-btn:hover { background: rgba(255,140,66,0.1); }
+
+  .agreement-box {
+    background: var(--green-soft);
+    border: 1.5px solid #C8E6C9;
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-top: 4px;
+  }
+  .agreement-check {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    cursor: pointer;
+  }
+  .agreement-check input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    margin-top: 1px;
+    accent-color: var(--green);
+    cursor: pointer;
+  }
+  .agreement-check span {
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: #2E7D32;
+  }
+
+  .submit-btn {
+    width: 100%;
+    padding: 18px;
+    background: linear-gradient(135deg, var(--accent) 0%, #FF6B00 100%);
+    color: #fff;
+    border: none;
+    border-radius: 16px;
+    font-size: 17px;
+    font-weight: 800;
+    font-family: 'Noto Sans KR', sans-serif;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(255,107,0,0.35);
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 20px;
+  }
+  .submit-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(255,107,0,0.4); }
+  .submit-btn:active { transform: translateY(0); }
+
+  /* Success screen */
+  .success-screen {
+    display: none;
+    text-align: center;
+    padding: 60px 24px;
+  }
+  .success-screen.show { display: block; }
+  .form-section.hide { display: none; }
+
+  .success-icon {
+    width: 90px; height: 90px;
+    background: linear-gradient(135deg, #4CAF50, #2E7D32);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 44px;
+    margin: 0 auto 24px;
+    box-shadow: 0 8px 28px rgba(76,175,80,0.35);
+    animation: pop 0.5s cubic-bezier(0.175,0.885,0.32,1.275);
+  }
+  @keyframes pop {
+    from { transform: scale(0); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  .success-screen h2 {
+    font-size: 24px;
+    font-weight: 900;
+    color: var(--dark-brown);
+    margin-bottom: 10px;
+  }
+  .success-screen p {
+    font-size: 14px;
+    color: #777;
+    line-height: 1.7;
+    margin-bottom: 24px;
+  }
+  .success-code {
+    background: var(--warm);
+    border: 2px dashed var(--accent-soft);
+    border-radius: 16px;
+    padding: 20px;
+    margin: 0 auto 28px;
+    max-width: 300px;
+  }
+  .success-code .label { font-size: 11px; color: var(--brown); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  .success-code .code { font-size: 32px; font-weight: 900; color: var(--accent); font-family: 'Nunito', sans-serif; letter-spacing: 2px; }
+  .counter-msg {
+    background: #E3F2FD;
+    border-radius: 12px;
+    padding: 14px 18px;
+    font-size: 13px;
+    color: #1565C0;
+    line-height: 1.6;
+  }
+
+  /* Validation */
+  input.error, select.error { border-color: #F44336; background: #FFF5F5; }
+  .error-msg { font-size: 11px; color: #F44336; margin-top: 5px; display: none; }
+  .error-msg.show { display: block; }
+
+  /* Loading */
+  .loading { display: inline-block; animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span class="header-emoji">🐶</span>
+  <h1>반려동물 접종 확인 등록</h1>
+  <p>입장 전 필수 사전 등록 폼</p>
+</div>
+
+<div class="container">
+  <div class="notice-card">
+    <span class="icon">💉</span>
+    <p>
+      저희 카페는 모든 반려동물의 <strong>광견병 예방접종</strong>을 필수로 확인합니다.<br>
+      아래 정보를 입력하시고, 카운터에서 <strong>접종 증명서</strong>를 제시해 주세요.
+    </p>
+  </div>
+
+  <div class="form-section" id="formSection">
+    <!-- 보호자 정보 -->
+    <div class="form-card">
+      <div class="section-title">👤 보호자 정보</div>
+
+      <div class="field">
+        <label>보호자 성함 <span class="required">*</span></label>
+        <input type="text" id="ownerName" placeholder="홍길동" maxlength="20">
+        <div class="error-msg" id="ownerNameErr">이름을 입력해주세요</div>
+      </div>
+
+      <div class="field">
+        <label>연락처 <span class="required">*</span></label>
+        <input type="tel" id="phone" placeholder="010-0000-0000" maxlength="13">
+        <div class="error-msg" id="phoneErr">올바른 전화번호를 입력해주세요</div>
+      </div>
+    </div>
+
+    <!-- 반려동물 정보 -->
+    <div class="form-card">
+      <div class="section-title">🐾 반려동물 정보</div>
+
+      <div class="field">
+        <label>반려동물 이름 <span class="required">*</span></label>
+        <input type="text" id="petName" placeholder="예: 초코" maxlength="20">
+        <div class="error-msg" id="petNameErr">반려동물 이름을 입력해주세요</div>
+      </div>
+
+      <div class="field">
+        <label>견종 <span class="required">*</span></label>
+        <input type="text" id="breed" placeholder="예: 말티즈, 포메라니안, 믹스" maxlength="30">
+        <div class="error-msg" id="breedErr">견종을 입력해주세요</div>
+      </div>
+
+      <div class="field">
+        <label>크기</label>
+        <div class="radio-group">
+          <div class="radio-option">
+            <input type="radio" name="size" id="small" value="소형">
+            <label for="small">🐩 소형</label>
+          </div>
+          <div class="radio-option">
+            <input type="radio" name="size" id="medium" value="중형">
+            <label for="medium">🐕 중형</label>
+          </div>
+          <div class="radio-option">
+            <input type="radio" name="size" id="large" value="대형">
+            <label for="large">🦮 대형</label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 접종 정보 -->
+    <div class="form-card">
+      <div class="section-title">💉 접종 정보</div>
+
+      <div class="field">
+        <label>최근 광견병 접종일 <span class="required">*</span></label>
+        <input type="date" id="vaccineDate" max="">
+        <div class="error-msg" id="vaccineDateErr">접종일을 선택해주세요</div>
+      </div>
+
+      <div class="field">
+        <label>접종 증명서 제출 방법 <span class="required">*</span></label>
+        <div class="radio-group">
+          <div class="radio-option">
+            <input type="radio" name="proofType" id="app" value="동물등록앱">
+            <label for="app">📱 동물등록앱</label>
+          </div>
+          <div class="radio-option">
+            <input type="radio" name="proofType" id="paper" value="종이증명서">
+            <label for="paper">📄 종이증명서</label>
+          </div>
+          <div class="radio-option">
+            <input type="radio" name="proofType" id="photo" value="사진">
+            <label for="photo">🖼️ 사진</label>
+          </div>
+        </div>
+        <div class="error-msg" id="proofTypeErr">제출 방법을 선택해주세요</div>
+      </div>
+    </div>
+
+    <!-- 서명 -->
+    <div class="form-card">
+      <div class="section-title">✍️ 서명</div>
+      <div class="field">
+        <label>손가락으로 서명해 주세요 <span class="required">*</span></label>
+        <div class="signature-area">
+          <canvas id="signatureCanvas" height="120"></canvas>
+          <div class="sig-toolbar">
+            <span class="sig-hint">아래 영역에 서명하세요</span>
+            <button class="clear-btn" onclick="clearSignature()">다시 쓰기</button>
+          </div>
+        </div>
+        <div class="error-msg" id="signatureErr">서명이 필요합니다</div>
+      </div>
+
+      <div class="field">
+        <div class="agreement-box">
+          <label class="agreement-check">
+            <input type="checkbox" id="agreement">
+            <span>
+              위 반려동물의 접종 정보가 사실임을 확인하며, 카운터에서 증명서를 제시할 것에 동의합니다. 
+              허위 정보 제공 시 입장이 거부될 수 있습니다.
+            </span>
+          </label>
+        </div>
+        <div class="error-msg" id="agreementErr">동의가 필요합니다</div>
+      </div>
+    </div>
+
+    <button class="submit-btn" onclick="submitForm()">
+      <span id="btnText">등록 완료하기 🐾</span>
+    </button>
+  </div>
+
+  <!-- 성공 화면 -->
+  <div class="success-screen" id="successScreen">
+    <div class="success-icon">✅</div>
+    <h2>등록 완료!</h2>
+    <p>사전 입력이 완료되었습니다.<br>카운터에서 아래 번호를 보여주시고<br>접종 증명서를 제시해 주세요.</p>
+    <div class="success-code">
+      <div class="label">확인 코드</div>
+      <div class="code" id="confirmCode">----</div>
+    </div>
+    <div class="counter-msg">
+      📋 카운터 직원이 접종 증명서를 확인한 후 입장 승인합니다.
+    </div>
+  </div>
+</div>
+
+<script>
+// Set today as max date for vaccine date
+document.getElementById('vaccineDate').max = new Date().toISOString().split('T')[0];
+
+// Phone number formatting
+document.getElementById('phone').addEventListener('input', function(e) {
+  let v = e.target.value.replace(/\D/g, '');
+  if (v.length <= 3) v = v;
+  else if (v.length <= 7) v = v.slice(0,3) + '-' + v.slice(3);
+  else v = v.slice(0,3) + '-' + v.slice(3,7) + '-' + v.slice(7,11);
+  e.target.value = v;
+});
+
+// Signature canvas
+const canvas = document.getElementById('signatureCanvas');
+const ctx = canvas.getContext('2d');
+let drawing = false;
+let hasSig = false;
+
+function resizeCanvas() {
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width;
+  ctx.strokeStyle = '#2D1B0E';
+  ctx.lineWidth = 2.5;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+function getPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  const touch = e.touches ? e.touches[0] : e;
+  return {
+    x: (touch.clientX - rect.left) * (canvas.width / rect.width),
+    y: (touch.clientY - rect.top) * (canvas.height / rect.height)
+  };
+}
+
+canvas.addEventListener('mousedown', e => { drawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
+canvas.addEventListener('mousemove', e => { if (!drawing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); hasSig = true; });
+canvas.addEventListener('mouseup', () => drawing = false);
+canvas.addEventListener('touchstart', e => { e.preventDefault(); drawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
+canvas.addEventListener('touchmove', e => { e.preventDefault(); if (!drawing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); hasSig = true; });
+canvas.addEventListener('touchend', () => drawing = false);
+
+function clearSignature() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  hasSig = false;
+}
+
+// Form validation & submit
+function showError(id, errId, show) {
+  const el = document.getElementById(id);
+  const err = document.getElementById(errId);
+  if (show) {
+    el.classList.add('error');
+    err.classList.add('show');
+  } else {
+    el.classList.remove('error');
+    err.classList.remove('show');
+  }
+}
+
+function submitForm() {
+  let valid = true;
+
+  const ownerName = document.getElementById('ownerName').value.trim();
+  showError('ownerName', 'ownerNameErr', !ownerName);
+  if (!ownerName) valid = false;
+
+  const phone = document.getElementById('phone').value.trim();
+  const phoneOk = /^010-\d{4}-\d{4}$/.test(phone) || /^\d{10,11}$/.test(phone.replace(/-/g,''));
+  showError('phone', 'phoneErr', !phoneOk);
+  if (!phoneOk) valid = false;
+
+  const petName = document.getElementById('petName').value.trim();
+  showError('petName', 'petNameErr', !petName);
+  if (!petName) valid = false;
+
+  const breed = document.getElementById('breed').value.trim();
+  showError('breed', 'breedErr', !breed);
+  if (!breed) valid = false;
+
+  const vaccineDate = document.getElementById('vaccineDate').value;
+  showError('vaccineDate', 'vaccineDateErr', !vaccineDate);
+  if (!vaccineDate) valid = false;
+
+  const proofType = document.querySelector('input[name="proofType"]:checked');
+  const proofErr = document.getElementById('proofTypeErr');
+  if (!proofType) { proofErr.classList.add('show'); valid = false; }
+  else proofErr.classList.remove('show');
+
+  if (!hasSig) { document.getElementById('signatureErr').classList.add('show'); valid = false; }
+  else document.getElementById('signatureErr').classList.remove('show');
+
+  const agreed = document.getElementById('agreement').checked;
+  const agreeErr = document.getElementById('agreementErr');
+  if (!agreed) { agreeErr.classList.add('show'); valid = false; }
+  else agreeErr.classList.remove('show');
+
+  if (!valid) {
+    document.querySelector('.error') && document.querySelector('.error').scrollIntoView({behavior:'smooth', block:'center'});
+    return;
+  }
+
+  // Prepare data
+  const size = document.querySelector('input[name="size"]:checked')?.value || '미기재';
+  const signatureData = canvas.toDataURL('image/png');
+  const visitDate = new Date().toLocaleDateString('ko-KR', {year:'numeric',month:'2-digit',day:'2-digit'});
+  const confirmCode = Math.random().toString(36).substr(2,6).toUpperCase();
+
+  const entry = {
+    visitDate,
+    ownerName,
+    phone,
+    petName,
+    breed,
+    size,
+    vaccineDate,
+    proofType: proofType.value,
+    signature: signatureData,
+    confirmCode,
+    status: '대기중',
+    timestamp: new Date().toISOString()
+  };
+
+  // Save to localStorage-like structure via URL param (for demo)
+  // In production: POST to Google Apps Script Web App URL
+  const existing = JSON.parse(sessionStorage.getItem('vaccineRecords') || '[]');
+  existing.push(entry);
+  sessionStorage.setItem('vaccineRecords', JSON.stringify(existing));
+
+  // Also try to POST to backend if configured
+  const BACKEND_URL = ''; // ← 구글 앱스 스크립트 URL 입력
+  if (BACKEND_URL) {
+    fetch(BACKEND_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(entry)
+    }).catch(() => {});
+  }
+
+  // Show success
+  document.getElementById('confirmCode').textContent = confirmCode;
+  document.getElementById('formSection').classList.add('hide');
+  document.getElementById('successScreen').classList.add('show');
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+</script>
+</body>
+</html>

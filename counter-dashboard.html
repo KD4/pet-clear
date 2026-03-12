@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🐾 카운터 대시보드 | 애견카페 관리</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0F1923;
+    --card: #162030;
+    --card2: #1C2A3A;
+    --border: #253547;
+    --accent: #FF8C42;
+    --accent2: #FFB380;
+    --green: #4ECDC4;
+    --green-bg: rgba(78,205,196,0.1);
+    --yellow: #FFD166;
+    --yellow-bg: rgba(255,209,102,0.12);
+    --red: #FF6B6B;
+    --red-bg: rgba(255,107,107,0.1);
+    --text: #E8F4F8;
+    --muted: #7A95A8;
+    --highlight: #253547;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* Top bar */
+  .topbar {
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 12px; }
+  .logo { font-family: 'Nunito', sans-serif; font-size: 18px; font-weight: 900; color: var(--accent); }
+  .logo span { color: var(--text); font-weight: 700; }
+  .live-badge {
+    background: var(--red);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 3px 8px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:0.6 } }
+  .topbar-right { display: flex; align-items: center; gap: 16px; }
+  .date-display { font-size: 13px; color: var(--muted); }
+  .refresh-btn {
+    background: var(--highlight);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 7px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 12px;
+    font-family: 'Noto Sans KR', sans-serif;
+    transition: all 0.2s;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .refresh-btn:hover { background: var(--border); }
+
+  /* Stats row */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    padding: 20px 24px 0;
+  }
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 18px;
+  }
+  .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
+  .stat-value { font-family: 'Nunito', sans-serif; font-size: 32px; font-weight: 900; }
+  .stat-value.total { color: var(--text); }
+  .stat-value.pending { color: var(--yellow); }
+  .stat-value.approved { color: var(--green); }
+  .stat-value.rejected { color: var(--red); }
+  .stat-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  /* Main content */
+  .main { padding: 20px 24px; display: grid; grid-template-columns: 1fr 360px; gap: 16px; }
+
+  /* Table panel */
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+  .panel-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .panel-title { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+
+  .search-bar {
+    display: flex;
+    gap: 8px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--card2);
+  }
+  .search-input {
+    flex: 1;
+    background: var(--highlight);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    color: var(--text);
+    font-size: 13px;
+    font-family: 'Noto Sans KR', sans-serif;
+  }
+  .search-input::placeholder { color: var(--muted); }
+  .search-input:focus { outline: none; border-color: var(--accent); }
+  .filter-select {
+    background: var(--highlight);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: var(--text);
+    font-size: 12px;
+    font-family: 'Noto Sans KR', sans-serif;
+    cursor: pointer;
+  }
+
+  .records-table { width: 100%; border-collapse: collapse; }
+  .records-table th {
+    padding: 10px 16px;
+    text-align: left;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--muted);
+    font-weight: 700;
+    border-bottom: 1px solid var(--border);
+    background: var(--card2);
+    white-space: nowrap;
+  }
+  .records-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(37,53,71,0.5);
+    font-size: 13px;
+    vertical-align: middle;
+  }
+  .records-table tr:last-child td { border-bottom: none; }
+  .records-table tr { cursor: pointer; transition: background 0.15s; }
+  .records-table tr:hover td { background: var(--highlight); }
+  .records-table tr.active td { background: rgba(255,140,66,0.08); }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .badge.pending { background: var(--yellow-bg); color: var(--yellow); }
+  .badge.approved { background: var(--green-bg); color: var(--green); }
+  .badge.rejected { background: var(--red-bg); color: var(--red); }
+
+  /* Detail panel */
+  .detail-panel { display: flex; flex-direction: column; gap: 12px; }
+  .detail-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+  .detail-header {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .detail-body { padding: 16px 18px; }
+
+  .detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(37,53,71,0.4);
+  }
+  .detail-row:last-child { border-bottom: none; }
+  .detail-key { font-size: 12px; color: var(--muted); }
+  .detail-val { font-size: 13px; font-weight: 600; color: var(--text); text-align: right; max-width: 55%; }
+
+  .sig-preview {
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-top: 10px;
+    min-height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .sig-preview img { max-width: 100%; max-height: 120px; display: block; }
+  .sig-preview .no-sig { color: #999; font-size: 13px; }
+
+  .action-buttons { display: flex; gap: 10px; padding: 16px 18px; }
+  .action-btn {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: 'Noto Sans KR', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .action-btn.approve { background: var(--green); color: #0F1923; }
+  .action-btn.approve:hover { filter: brightness(1.1); }
+  .action-btn.reject { background: var(--red-bg); color: var(--red); border: 1px solid var(--red); }
+  .action-btn.reject:hover { background: var(--red); color: #fff; }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+  .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; }
+
+  .no-selection {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px;
+    color: var(--muted);
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+  }
+  .no-selection .icon { font-size: 52px; margin-bottom: 16px; opacity: 0.5; }
+
+  /* Manual add form */
+  .add-form { padding: 0 18px 18px; }
+  .add-form input, .add-form select {
+    width: 100%;
+    background: var(--highlight);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    color: var(--text);
+    font-size: 13px;
+    font-family: 'Noto Sans KR', sans-serif;
+    margin-bottom: 8px;
+  }
+  .add-form input:focus, .add-form select:focus { outline: none; border-color: var(--accent); }
+  .add-form input::placeholder { color: var(--muted); }
+  .add-btn {
+    width: 100%;
+    padding: 11px;
+    background: linear-gradient(135deg, var(--accent), #FF6B00);
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: 'Noto Sans KR', sans-serif;
+    cursor: pointer;
+    margin-top: 4px;
+    transition: all 0.2s;
+  }
+  .add-btn:hover { filter: brightness(1.1); }
+
+  .export-btn {
+    background: var(--highlight);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 7px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 12px;
+    font-family: 'Noto Sans KR', sans-serif;
+    transition: all 0.2s;
+  }
+  .export-btn:hover { background: var(--border); }
+
+  .vaccine-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+  .vaccine-status.valid { background: var(--green-bg); color: var(--green); }
+  .vaccine-status.warning { background: var(--yellow-bg); color: var(--yellow); }
+  .vaccine-status.expired { background: var(--red-bg); color: var(--red); }
+
+  @media (max-width: 900px) {
+    .stats-row { grid-template-columns: repeat(2,1fr); }
+    .main { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Top bar -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="logo">🐾 <span>애견카페</span> 관리</div>
+    <div class="live-badge">● LIVE</div>
+  </div>
+  <div class="topbar-right">
+    <div class="date-display" id="currentDate"></div>
+    <button class="refresh-btn" onclick="loadRecords()">🔄 새로고침</button>
+    <button class="export-btn" onclick="exportCSV()">📥 CSV 내보내기</button>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-row">
+  <div class="stat-card">
+    <div class="stat-label">오늘 총 방문</div>
+    <div class="stat-value total" id="statTotal">0</div>
+    <div class="stat-sub">마리</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">확인 대기</div>
+    <div class="stat-value pending" id="statPending">0</div>
+    <div class="stat-sub">건</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">입장 승인</div>
+    <div class="stat-value approved" id="statApproved">0</div>
+    <div class="stat-sub">건</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">입장 거부</div>
+    <div class="stat-value rejected" id="statRejected">0</div>
+    <div class="stat-sub">건</div>
+  </div>
+</div>
+
+<!-- Main -->
+<div class="main">
+  <!-- Records Table -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">📋 접종 등록 목록</div>
+    </div>
+    <div class="search-bar">
+      <input class="search-input" id="searchInput" placeholder="🔍  이름, 견종, 전화번호 검색..." oninput="renderTable()">
+      <select class="filter-select" id="statusFilter" onchange="renderTable()">
+        <option value="">전체 상태</option>
+        <option value="대기중">대기중</option>
+        <option value="승인">승인</option>
+        <option value="거부">거부</option>
+      </select>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="records-table">
+        <thead>
+          <tr>
+            <th>시간</th>
+            <th>보호자</th>
+            <th>반려동물</th>
+            <th>견종</th>
+            <th>접종일</th>
+            <th>증명서</th>
+            <th>상태</th>
+            <th>코드</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+      <div id="emptyState" class="empty-state" style="display:none;">
+        <div class="icon">🐾</div>
+        <p>등록된 방문 기록이 없습니다</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detail & Add panels -->
+  <div class="detail-panel">
+    <!-- Selected record detail -->
+    <div id="detailArea">
+      <div class="no-selection">
+        <div class="icon">👆</div>
+        <p style="font-size:14px; margin-bottom:8px; color: var(--text);">목록에서 항목 선택</p>
+        <p style="font-size:12px;">선택하면 상세 정보와<br>승인/거부 버튼이 표시됩니다</p>
+      </div>
+    </div>
+
+    <!-- Manual entry -->
+    <div class="detail-card">
+      <div class="detail-header">➕ 직접 수기 입력</div>
+      <div class="add-form">
+        <input type="text" id="m_owner" placeholder="보호자 이름 *">
+        <input type="tel" id="m_phone" placeholder="연락처 *">
+        <input type="text" id="m_pet" placeholder="반려동물 이름 *">
+        <input type="text" id="m_breed" placeholder="견종 *">
+        <input type="date" id="m_vaccineDate" max="">
+        <select id="m_proof">
+          <option value="">증명서 종류 선택</option>
+          <option value="동물등록앱">동물등록앱</option>
+          <option value="종이증명서">종이증명서</option>
+          <option value="사진">사진</option>
+        </select>
+        <button class="add-btn" onclick="addManual()">+ 추가 등록</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let records = [];
+let selectedIdx = null;
+
+// Set date display
+const now = new Date();
+document.getElementById('currentDate').textContent = now.toLocaleDateString('ko-KR', {
+  year:'numeric', month:'long', day:'numeric', weekday:'long'
+});
+document.getElementById('m_vaccineDate').max = now.toISOString().split('T')[0];
+
+function loadRecords() {
+  // Load from sessionStorage (shared with customer form)
+  const stored = JSON.parse(sessionStorage.getItem('vaccineRecords') || '[]');
+  
+  // Demo data if empty
+  if (stored.length === 0) {
+    records = [
+      { visitDate: now.toLocaleDateString('ko-KR'), ownerName: '김민준', phone: '010-1234-5678', petName: '코코', breed: '말티즈', size: '소형', vaccineDate: '2025-08-15', proofType: '동물등록앱', status: '대기중', confirmCode: 'A3X9K2', timestamp: new Date(now - 600000).toISOString() },
+      { visitDate: now.toLocaleDateString('ko-KR'), ownerName: '이서연', phone: '010-9876-5432', petName: '뭉치', breed: '포메라니안', size: '소형', vaccineDate: '2025-11-20', proofType: '종이증명서', status: '승인', confirmCode: 'B7M4P1', timestamp: new Date(now - 1200000).toISOString() },
+      { visitDate: now.toLocaleDateString('ko-KR'), ownerName: '박지훈', phone: '010-5555-7777', petName: '두부', breed: '골든리트리버', size: '대형', vaccineDate: '2024-03-10', proofType: '사진', status: '거부', confirmCode: 'C2N8Q5', timestamp: new Date(now - 2100000).toISOString() },
+      { visitDate: now.toLocaleDateString('ko-KR'), ownerName: '최수진', phone: '010-2222-3333', petName: '하루', breed: '시추', size: '소형', vaccineDate: '2025-12-05', proofType: '동물등록앱', status: '대기중', confirmCode: 'D6L3R7', timestamp: new Date(now - 300000).toISOString() },
+    ];
+  } else {
+    records = stored;
+  }
+
+  renderTable();
+  updateStats();
+}
+
+function updateStats() {
+  const today = now.toLocaleDateString('ko-KR');
+  const todayRecs = records.filter(r => r.visitDate === today || !r.visitDate);
+  document.getElementById('statTotal').textContent = todayRecs.length;
+  document.getElementById('statPending').textContent = todayRecs.filter(r => r.status === '대기중').length;
+  document.getElementById('statApproved').textContent = todayRecs.filter(r => r.status === '승인').length;
+  document.getElementById('statRejected').textContent = todayRecs.filter(r => r.status === '거부').length;
+}
+
+function getVaccineStatus(dateStr) {
+  if (!dateStr) return { class: 'expired', label: '날짜 미확인' };
+  const d = new Date(dateStr);
+  const diffDays = (now - d) / (1000 * 60 * 60 * 24);
+  if (diffDays > 365) return { class: 'expired', label: '⚠ 1년 초과 (만료)' };
+  if (diffDays > 300) return { class: 'warning', label: '⚡ 갱신 필요 예정' };
+  return { class: 'valid', label: '✅ 유효 (1년 이내)' };
+}
+
+function renderTable() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const filter = document.getElementById('statusFilter').value;
+
+  const filtered = records.filter(r => {
+    const match = !search || [r.ownerName, r.petName, r.breed, r.phone].join('').toLowerCase().includes(search);
+    const statusMatch = !filter || r.status === filter;
+    return match && statusMatch;
+  });
+
+  const tbody = document.getElementById('tableBody');
+  const empty = document.getElementById('emptyState');
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  tbody.innerHTML = filtered.map((r, i) => {
+    const realIdx = records.indexOf(r);
+    const time = r.timestamp ? new Date(r.timestamp).toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'}) : '--:--';
+    const statusBadge = {
+      '대기중': '<span class="badge pending">⏳ 대기중</span>',
+      '승인': '<span class="badge approved">✅ 승인</span>',
+      '거부': '<span class="badge rejected">❌ 거부</span>'
+    }[r.status] || '';
+    return `<tr onclick="selectRecord(${realIdx})" ${selectedIdx === realIdx ? 'class="active"' : ''}>
+      <td>${time}</td>
+      <td><strong>${r.ownerName}</strong></td>
+      <td>${r.petName}</td>
+      <td style="color:var(--muted)">${r.breed}</td>
+      <td>${r.vaccineDate || '-'}</td>
+      <td style="font-size:11px; color:var(--muted)">${r.proofType || '-'}</td>
+      <td>${statusBadge}</td>
+      <td style="font-family:'Nunito',sans-serif; font-size:12px; color:var(--accent)">${r.confirmCode || '-'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function selectRecord(idx) {
+  selectedIdx = idx;
+  renderTable();
+  renderDetail();
+}
+
+function renderDetail() {
+  const r = records[selectedIdx];
+  if (!r) return;
+
+  const vs = getVaccineStatus(r.vaccineDate);
+  const time = r.timestamp ? new Date(r.timestamp).toLocaleString('ko-KR') : '-';
+
+  document.getElementById('detailArea').innerHTML = `
+    <div class="detail-card">
+      <div class="detail-header">📋 상세 정보 — ${r.confirmCode}</div>
+      <div class="detail-body">
+        <div class="vaccine-status ${vs.class}">${vs.label}</div>
+        <div class="detail-row"><span class="detail-key">보호자</span><span class="detail-val">${r.ownerName}</span></div>
+        <div class="detail-row"><span class="detail-key">연락처</span><span class="detail-val">${r.phone}</span></div>
+        <div class="detail-row"><span class="detail-key">반려동물</span><span class="detail-val">${r.petName} (${r.breed})</span></div>
+        <div class="detail-row"><span class="detail-key">크기</span><span class="detail-val">${r.size || '-'}</span></div>
+        <div class="detail-row"><span class="detail-key">최근 접종일</span><span class="detail-val">${r.vaccineDate || '-'}</span></div>
+        <div class="detail-row"><span class="detail-key">증명서 종류</span><span class="detail-val">${r.proofType || '-'}</span></div>
+        <div class="detail-row"><span class="detail-key">등록 시간</span><span class="detail-val" style="font-size:11px">${time}</span></div>
+        <div class="detail-row"><span class="detail-key">현재 상태</span><span class="detail-val">${r.status}</span></div>
+        ${r.signature ? `<div style="margin-top:12px"><div class="detail-key" style="margin-bottom:6px">서명</div><div class="sig-preview"><img src="${r.signature}" alt="서명"></div></div>` : ''}
+      </div>
+      <div class="action-buttons">
+        <button class="action-btn approve" onclick="updateStatus('승인')">✅ 입장 승인</button>
+        <button class="action-btn reject" onclick="updateStatus('거부')">❌ 입장 거부</button>
+      </div>
+    </div>
+  `;
+}
+
+function updateStatus(status) {
+  if (selectedIdx === null) return;
+  records[selectedIdx].status = status;
+  sessionStorage.setItem('vaccineRecords', JSON.stringify(records));
+  updateStats();
+  renderTable();
+  renderDetail();
+}
+
+function addManual() {
+  const owner = document.getElementById('m_owner').value.trim();
+  const phone = document.getElementById('m_phone').value.trim();
+  const pet = document.getElementById('m_pet').value.trim();
+  const breed = document.getElementById('m_breed').value.trim();
+  if (!owner || !phone || !pet || !breed) {
+    alert('보호자, 연락처, 반려동물 이름, 견종은 필수입니다.');
+    return;
+  }
+
+  const entry = {
+    visitDate: now.toLocaleDateString('ko-KR'),
+    ownerName: owner,
+    phone,
+    petName: pet,
+    breed,
+    size: '-',
+    vaccineDate: document.getElementById('m_vaccineDate').value,
+    proofType: document.getElementById('m_proof').value,
+    status: '대기중',
+    confirmCode: Math.random().toString(36).substr(2,6).toUpperCase(),
+    timestamp: new Date().toISOString()
+  };
+  records.unshift(entry);
+  sessionStorage.setItem('vaccineRecords', JSON.stringify(records));
+
+  // Clear form
+  ['m_owner','m_phone','m_pet','m_breed','m_vaccineDate'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('m_proof').value = '';
+
+  updateStats();
+  renderTable();
+}
+
+function exportCSV() {
+  const headers = ['방문일자','시간','보호자','연락처','반려동물','견종','크기','최근접종일','증명서종류','상태','확인코드'];
+  const rows = records.map(r => {
+    const time = r.timestamp ? new Date(r.timestamp).toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'}) : '';
+    return [r.visitDate, time, r.ownerName, r.phone, r.petName, r.breed, r.size, r.vaccineDate, r.proofType, r.status, r.confirmCode].map(v => `"${v || ''}"`).join(',');
+  });
+  const csv = '\uFEFF' + [headers.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `접종기록_${now.toLocaleDateString('ko-KR').replace(/\./g,'').replace(/ /g,'')}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// Init
+loadRecords();
+setInterval(loadRecords, 30000); // Auto-refresh every 30 seconds
+</script>
+</body>
+</html>
