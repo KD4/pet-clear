@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🐾 입장 등록 | 모루티</title>
+<title>🐾 입장 등록 | 애견카페</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Nunito:wght@400;600;800;900&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -330,6 +330,55 @@
     line-height: 1.6;
   }
 
+
+  /* 개인정보 수집 동의 카드 */
+  .privacy-card {
+    background: #EEF4FF;
+    border: 1.5px solid #90CAF9;
+    border-radius: 14px;
+    padding: 16px;
+  }
+  .privacy-title {
+    font-size: 14px;
+    font-weight: 800;
+    color: #1565C0;
+    margin-bottom: 12px;
+  }
+  .privacy-table {
+    border: 1px solid #BBDEFB;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 12px;
+    font-size: 11.5px;
+  }
+  .privacy-row {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr 0.8fr;
+    gap: 0;
+  }
+  .privacy-row span {
+    padding: 8px 10px;
+    border-right: 1px solid #BBDEFB;
+    color: #1A237E;
+    line-height: 1.4;
+  }
+  .privacy-row span:last-child { border-right: none; }
+  .privacy-row.header-row {
+    background: #1565C0;
+  }
+  .privacy-row.header-row span {
+    color: #fff;
+    font-weight: 700;
+    font-size: 11px;
+  }
+  .privacy-row:not(.header-row) { background: #fff; }
+  .privacy-notice {
+    font-size: 11px;
+    color: #1565C0;
+    line-height: 1.7;
+    opacity: 0.8;
+    margin-bottom: 4px;
+  }
   /* Validation */
   input.error, select.error { border-color: #F44336; background: #FFF5F5; }
   .error-msg { font-size: 11px; color: #F44336; margin-top: 5px; display: none; }
@@ -455,12 +504,39 @@
         <div class="error-msg" id="signatureErr">서명이 필요합니다</div>
       </div>
 
+      <!-- 개인정보 수집·이용 동의 -->
+      <div class="field">
+        <div class="privacy-card">
+          <div class="privacy-title">🔒 개인정보 수집·이용 동의 <span class="required">*</span></div>
+          <div class="privacy-table">
+            <div class="privacy-row header-row">
+              <span>수집 항목</span><span>수집 목적</span><span>보유 기간</span>
+            </div>
+            <div class="privacy-row">
+              <span>이름, 연락처(뒤 4자리), 서명</span>
+              <span>광견병 접종 확인 및 입장 관리</span>
+              <span>방문일로부터 5년</span>
+            </div>
+          </div>
+          <div class="privacy-notice">
+            ※ 수집된 개인정보는 위 목적 외 사용되지 않으며, 제3자에게 제공되지 않습니다.<br>
+            ※ 동의를 거부하실 수 있으나, 거부 시 입장이 제한될 수 있습니다.
+          </div>
+          <label class="agreement-check" style="margin-top:12px; background:rgba(21,101,192,0.06); padding:10px; border-radius:10px;">
+            <input type="checkbox" id="privacyAgreement">
+            <span style="color:#1565C0; font-weight:700;">개인정보 수집·이용에 동의합니다</span>
+          </label>
+        </div>
+        <div class="error-msg" id="privacyAgreementErr">개인정보 수집·이용 동의가 필요합니다</div>
+      </div>
+
+      <!-- 접종 사실 확인 동의 -->
       <div class="field">
         <div class="agreement-box">
           <label class="agreement-check">
             <input type="checkbox" id="agreement">
             <span>
-              위 반려동물의 접종 정보가 사실임을 확인하며, 카운터에서 증명서를 제시할 것에 동의합니다. 
+              위 반려동물의 접종 정보가 사실임을 확인하며, 카운터에서 증명서를 제시할 것에 동의합니다.
               허위 정보 제공 시 입장이 거부될 수 있습니다.
             </span>
           </label>
@@ -585,6 +661,11 @@ function submitForm() {
   if (!hasSig) { document.getElementById('signatureErr').classList.add('show'); valid = false; }
   else document.getElementById('signatureErr').classList.remove('show');
 
+  const privacyAgreed = document.getElementById('privacyAgreement').checked;
+  const privacyErr = document.getElementById('privacyAgreementErr');
+  if (!privacyAgreed) { privacyErr.classList.add('show'); valid = false; }
+  else privacyErr.classList.remove('show');
+
   const agreed = document.getElementById('agreement').checked;
   const agreeErr = document.getElementById('agreementErr');
   if (!agreed) { agreeErr.classList.add('show'); valid = false; }
@@ -601,10 +682,11 @@ function submitForm() {
   const visitDate = new Date().toLocaleDateString('ko-KR', {year:'numeric',month:'2-digit',day:'2-digit'});
   const confirmCode = Math.random().toString(36).substr(2,6).toUpperCase();
 
+
   const entry = {
     visitDate,
     ownerName,
-    phone,
+    phone: phoneMasked,
     petName,
     breed,
     size,
