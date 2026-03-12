@@ -623,7 +623,7 @@ function submitForm() {
   sessionStorage.setItem('vaccineRecords', JSON.stringify(existing));
 
   // Also try to POST to backend if configured
-  const BACKEND_URL = ''; // ← 구글 앱스 스크립트 URL 입력
+  const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwjmSo5x7o994oRstpIHnuJim1DsbxZqqm-WCwsYIHXxYKJ69vQAGeRBro34kQBevQ/exec'; // ← 구글 앱스 스크립트 URL 입력
   if (BACKEND_URL) {
     fetch(BACKEND_URL, {
       method: 'POST',
