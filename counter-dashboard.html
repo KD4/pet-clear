@@ -428,36 +428,115 @@
 </div>
 
 <script>
+const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwjmSo5x7o994oRstpIHnuJim1DsbxZqqm-WCwsYIHXxYKJ69vQAGeRBro34kQBevQ/exec';
+
 let records = [];
 let selectedIdx = null;
 
-// Set date display
 const now = new Date();
 document.getElementById('currentDate').textContent = now.toLocaleDateString('ko-KR', {
   year:'numeric', month:'long', day:'numeric', weekday:'long'
 });
 document.getElementById('m_vaccineDate').max = now.toISOString().split('T')[0];
 
-function loadRecords() {
-  // Load from sessionStorage (shared with customer form)
-  const stored = JSON.parse(sessionStorage.getItem('vaccineRecords') || '[]');
-  
-  // Demo data if empty
-  if (stored.length === 0) {
-    records = [
-      { visitDate: now.toLocaleDateString('ko-KR'), ownerName: '김민준', phone: '010-1234-5678', petName: '코코', breed: '말티즈', size: '소형', vaccineDate: '2025-08-15', proofType: '동물등록앱', status: '대기중', confirmCode: 'A3X9K2', timestamp: new Date(now - 600000).toISOString() },
-      { visitDate: now.toLocaleDateString('ko-KR'), ownerName: '이서연', phone: '010-9876-5432', petName: '뭉치', breed: '포메라니안', size: '소형', vaccineDate: '2025-11-20', proofType: '종이증명서', status: '승인', confirmCode: 'B7M4P1', timestamp: new Date(now - 1200000).toISOString() },
-      { visitDate: now.toLocaleDateString('ko-KR'), ownerName: '박지훈', phone: '010-5555-7777', petName: '두부', breed: '골든리트리버', size: '대형', vaccineDate: '2024-03-10', proofType: '사진', status: '거부', confirmCode: 'C2N8Q5', timestamp: new Date(now - 2100000).toISOString() },
-      { visitDate: now.toLocaleDateString('ko-KR'), ownerName: '최수진', phone: '010-2222-3333', petName: '하루', breed: '시추', size: '소형', vaccineDate: '2025-12-05', proofType: '동물등록앱', status: '대기중', confirmCode: 'D6L3R7', timestamp: new Date(now - 300000).toISOString() },
-    ];
-  } else {
-    records = stored;
-  }
-
-  renderTable();
-  updateStats();
+// ─── 로딩 표시 ───────────────────────────────────────────
+function setLoading(on) {
+  const btn = document.querySelector('.refresh-btn');
+  btn.textContent = on ? '⏳ 불러오는 중...' : '🔄 새로고침';
+  btn.disabled = on;
 }
 
+// ─── 구글 시트에서 데이터 불러오기 ──────────────────────
+async function loadRecords() {
+  setLoading(true);
+  try {
+    const res = await fetch(BACKEND_URL + '?action=getRecords', { cache: 'no-store' });
+    const json = await res.json();
+    if (json.records && Array.isArray(json.records)) {
+      records = json.records.reverse(); // 최신 순
+    }
+  } catch (e) {
+    console.error('데이터 로드 실패:', e);
+    showToast('❌ 데이터를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.', 'error');
+  } finally {
+    setLoading(false);
+    renderTable();
+    updateStats();
+  }
+}
+
+// ─── 상태 업데이트 → 구글 시트에 반영 ──────────────────
+async function updateStatus(status) {
+  if (selectedIdx === null) return;
+  const r = records[selectedIdx];
+  const prev = r.status;
+  r.status = status; // 낙관적 업데이트
+  renderTable();
+  renderDetail();
+  updateStats();
+
+  try {
+    await fetch(BACKEND_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'updateStatus', confirmCode: r.confirmCode, status })
+    });
+    showToast(status === '승인' ? '✅ 입장 승인 완료!' : '❌ 입장 거부 처리됨', status === '승인' ? 'success' : 'error');
+  } catch (e) {
+    r.status = prev; // 롤백
+    renderTable(); renderDetail(); updateStats();
+    showToast('⚠ 상태 변경 실패. 다시 시도해주세요.', 'error');
+  }
+}
+
+// ─── 수기 입력 → 구글 시트에 저장 ──────────────────────
+async function addManual() {
+  const owner = document.getElementById('m_owner').value.trim();
+  const phone = document.getElementById('m_phone').value.trim();
+  const pet   = document.getElementById('m_pet').value.trim();
+  const breed = document.getElementById('m_breed').value.trim();
+  if (!owner || !phone || !pet || !breed) {
+    showToast('⚠ 보호자, 연락처, 반려동물 이름, 견종은 필수입니다.', 'error');
+    return;
+  }
+
+  const entry = {
+    action: 'addRecord',
+    visitDate: now.toLocaleDateString('ko-KR'),
+    ownerName: owner, phone, petName: pet, breed,
+    size: '-',
+    vaccineDate: document.getElementById('m_vaccineDate').value,
+    proofType: document.getElementById('m_proof').value,
+    status: '대기중',
+    confirmCode: Math.random().toString(36).substr(2,6).toUpperCase(),
+    timestamp: new Date().toISOString()
+  };
+
+  const addBtn = document.querySelector('.add-btn');
+  addBtn.disabled = true;
+  addBtn.textContent = '저장 중...';
+
+  try {
+    await fetch(BACKEND_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(entry)
+    });
+    ['m_owner','m_phone','m_pet','m_breed','m_vaccineDate'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('m_proof').value = '';
+    showToast('✅ 등록 완료!', 'success');
+    setTimeout(loadRecords, 800); // 시트 반영 후 새로고침
+  } catch(e) {
+    showToast('❌ 저장 실패. 다시 시도해주세요.', 'error');
+  } finally {
+    addBtn.disabled = false;
+    addBtn.textContent = '+ 추가 등록';
+  }
+}
+
+// ─── 통계 ────────────────────────────────────────────────
 function updateStats() {
   const today = now.toLocaleDateString('ko-KR');
   const todayRecs = records.filter(r => r.visitDate === today || !r.visitDate);
@@ -476,6 +555,7 @@ function getVaccineStatus(dateStr) {
   return { class: 'valid', label: '✅ 유효 (1년 이내)' };
 }
 
+// ─── 테이블 렌더 ─────────────────────────────────────────
 function renderTable() {
   const search = document.getElementById('searchInput').value.toLowerCase();
   const filter = document.getElementById('statusFilter').value;
@@ -496,13 +576,13 @@ function renderTable() {
   }
   empty.style.display = 'none';
 
-  tbody.innerHTML = filtered.map((r, i) => {
+  tbody.innerHTML = filtered.map(r => {
     const realIdx = records.indexOf(r);
     const time = r.timestamp ? new Date(r.timestamp).toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'}) : '--:--';
     const statusBadge = {
       '대기중': '<span class="badge pending">⏳ 대기중</span>',
-      '승인': '<span class="badge approved">✅ 승인</span>',
-      '거부': '<span class="badge rejected">❌ 거부</span>'
+      '승인':   '<span class="badge approved">✅ 승인</span>',
+      '거부':   '<span class="badge rejected">❌ 거부</span>'
     }[r.status] || '';
     return `<tr onclick="selectRecord(${realIdx})" ${selectedIdx === realIdx ? 'class="active"' : ''}>
       <td>${time}</td>
@@ -526,7 +606,6 @@ function selectRecord(idx) {
 function renderDetail() {
   const r = records[selectedIdx];
   if (!r) return;
-
   const vs = getVaccineStatus(r.vaccineDate);
   const time = r.timestamp ? new Date(r.timestamp).toLocaleString('ko-KR') : '-';
 
@@ -553,49 +632,7 @@ function renderDetail() {
   `;
 }
 
-function updateStatus(status) {
-  if (selectedIdx === null) return;
-  records[selectedIdx].status = status;
-  sessionStorage.setItem('vaccineRecords', JSON.stringify(records));
-  updateStats();
-  renderTable();
-  renderDetail();
-}
-
-function addManual() {
-  const owner = document.getElementById('m_owner').value.trim();
-  const phone = document.getElementById('m_phone').value.trim();
-  const pet = document.getElementById('m_pet').value.trim();
-  const breed = document.getElementById('m_breed').value.trim();
-  if (!owner || !phone || !pet || !breed) {
-    alert('보호자, 연락처, 반려동물 이름, 견종은 필수입니다.');
-    return;
-  }
-
-  const entry = {
-    visitDate: now.toLocaleDateString('ko-KR'),
-    ownerName: owner,
-    phone,
-    petName: pet,
-    breed,
-    size: '-',
-    vaccineDate: document.getElementById('m_vaccineDate').value,
-    proofType: document.getElementById('m_proof').value,
-    status: '대기중',
-    confirmCode: Math.random().toString(36).substr(2,6).toUpperCase(),
-    timestamp: new Date().toISOString()
-  };
-  records.unshift(entry);
-  sessionStorage.setItem('vaccineRecords', JSON.stringify(records));
-
-  // Clear form
-  ['m_owner','m_phone','m_pet','m_breed','m_vaccineDate'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('m_proof').value = '';
-
-  updateStats();
-  renderTable();
-}
-
+// ─── CSV 내보내기 ─────────────────────────────────────────
 function exportCSV() {
   const headers = ['방문일자','시간','보호자','연락처','반려동물','견종','크기','최근접종일','증명서종류','상태','확인코드'];
   const rows = records.map(r => {
@@ -612,9 +649,25 @@ function exportCSV() {
   URL.revokeObjectURL(url);
 }
 
-// Init
+// ─── 토스트 알림 ──────────────────────────────────────────
+function showToast(msg, type = 'success') {
+  const t = document.createElement('div');
+  t.style.cssText = `
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+    background:${type === 'success' ? '#4ECDC4' : '#FF6B6B'};
+    color:#fff; padding:12px 24px; border-radius:12px; font-size:14px;
+    font-weight:700; font-family:'Noto Sans KR',sans-serif;
+    box-shadow:0 4px 20px rgba(0,0,0,0.3); z-index:9999;
+    animation: fadeIn 0.3s ease;
+  `;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+// ─── 초기화 ───────────────────────────────────────────────
 loadRecords();
-setInterval(loadRecords, 30000); // Auto-refresh every 30 seconds
+setInterval(loadRecords, 30000); // 30초마다 자동 새로고침
 </script>
 </body>
 </html>

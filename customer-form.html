@@ -616,28 +616,27 @@ function submitForm() {
     timestamp: new Date().toISOString()
   };
 
-  // Save to localStorage-like structure via URL param (for demo)
-  // In production: POST to Google Apps Script Web App URL
-  const existing = JSON.parse(sessionStorage.getItem('vaccineRecords') || '[]');
-  existing.push(entry);
-  sessionStorage.setItem('vaccineRecords', JSON.stringify(existing));
+  const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwjmSo5x7o994oRstpIHnuJim1DsbxZqqm-WCwsYIHXxYKJ69vQAGeRBro34kQBevQ/exec';
 
-  // Also try to POST to backend if configured
-  const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwjmSo5x7o994oRstpIHnuJim1DsbxZqqm-WCwsYIHXxYKJ69vQAGeRBro34kQBevQ/exec'; // ← 구글 앱스 스크립트 URL 입력
-  if (BACKEND_URL) {
-    fetch(BACKEND_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(entry)
-    }).catch(() => {});
-  }
+  // 버튼 로딩 상태
+  const btn = document.querySelector('.submit-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loading">⏳</span> 저장 중...';
 
-  // Show success
-  document.getElementById('confirmCode').textContent = confirmCode;
-  document.getElementById('formSection').classList.add('hide');
-  document.getElementById('successScreen').classList.add('show');
-  window.scrollTo({top:0, behavior:'smooth'});
+  fetch(BACKEND_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(entry)
+  })
+  .catch(() => {}) // no-cors라 항상 opaque response → catch 무시
+  .finally(() => {
+    // 성공 화면 표시
+    document.getElementById('confirmCode').textContent = confirmCode;
+    document.getElementById('formSection').classList.add('hide');
+    document.getElementById('successScreen').classList.add('show');
+    window.scrollTo({top:0, behavior:'smooth'});
+  });
 }
 </script>
 </body>
